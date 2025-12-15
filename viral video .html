@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>ভিডিও লোডিং...</title>
+    <meta name="description" content="ভাইরাল ভিডিও দেখুন">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:title" content="Viral Video">
+    <meta property="og:description" content="Watch this video">
+    <meta property="og:image" content="">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        body { background: #000; color: white; min-height: 100vh; }
+        .video-container { max-width: 800px; margin: 0 auto; padding-top: 20px; }
+        video { width: 100%; border-radius: 10px; background: #222; max-height: 500px; }
+        .btn-download { width: 100%; font-size: 18px; font-weight: bold; margin-top: 15px; }
+        .meta-info { background: #1a1a1a; padding: 20px; border-radius: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container video-container">
+        <a href="index.html" class="btn btn-outline-light mb-3"><i class="fas fa-arrow-left"></i> হোম পেজ</a>
+
+        <div id="loader" class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p>ভিডিও লোড হচ্ছে...</p>
+        </div>
+
+        <div id="content-area" style="display: none;">
+            
+            <video id="mainVideo" controls autoplay playsinline poster="">
+                <source id="videoSource" src="" type="video/mp4">
+                আপনার ব্রাউজার ভিডিও সাপোর্ট করছে না।
+            </video>
+
+            <div class="meta-info">
+                <h2 id="videoTitle" class="mb-3">Title Here</h2>
+                
+                <a id="downloadBtn" href="#" target="_blank" class="btn btn-success btn-download">
+                    <i class="fas fa-download me-2"></i> ভিডিও ডাউনলোড করুন
+                </a>
+
+                <hr class="bg-secondary">
+                <p class="text-muted mb-1">Description:</p>
+                <p id="videoDesc">ভিডিওর বিবরণ...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // ⚠️ আপনার একই Firebase Config এখানে বসান
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvmM0i0oQyqE7OywtuPaNVwCIb3lcR3yA",
+  authDomain: "viral-video-2ddb4.firebaseapp.com",
+  databaseURL: "https://viral-video-2ddb4-default-rtdb.firebaseio.com",
+  projectId: "viral-video-2ddb4",
+  storageBucket: "viral-video-2ddb4.firebasestorage.app",
+  messagingSenderId: "371603329130",
+  appId: "1:371603329130:web:2125f1eb16b6bfb55e7a13",
+  measurementId: "G-L4481L78P1
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ১. URL থেকে ID বের করা (যেমন: post.html?id=-OgXwn...)
+        const params = new URLSearchParams(window.location.search);
+        const videoId = params.get('id');
+
+        if(videoId) {
+            const videoRef = ref(db, 'videos/' + videoId);
+
+            // ২. ডাটাবেস থেকে শুধু ওই ভিডিওর ডাটা আনা
+            get(videoRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    
+                    // --- SEO & META TAG UPDATE (ম্যাজিক পার্ট) ---
+                    // পেজের টাইটেল চেঞ্জ করা
+                    document.title = data.title; 
+                    
+                    // মেটা ডেসক্রিপশন চেঞ্জ করা (Google এর জন্য)
+                    document.querySelector('meta[name="description"]').setAttribute("content", data.description);
+                    
+                    // Open Graph ট্যাগ আপডেট (চেষ্টা করা হবে)
+                    document.querySelector('meta[property="og:title"]').setAttribute("content", data.title);
+                    document.querySelector('meta[property="og:description"]').setAttribute("content", data.description);
+                    document.querySelector('meta[property="og:image"]').setAttribute("content", data.thumbnail);
+                    // ----------------------------------------------
+
+                    // ৩. UI তে ডাটা বসানো
+                    document.getElementById('mainVideo').src = data.videoUrl;
+                    document.getElementById('mainVideo').poster = data.thumbnail;
+                    document.getElementById('videoTitle').innerText = data.title;
+                    document.getElementById('videoDesc').innerText = data.description;
+                    document.getElementById('downloadBtn').href = data.downloadUrl;
+
+                    // লোডার সরিয়ে কন্টেন্ট দেখানো
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('content-area').style.display = 'block';
+
+                } else {
+                    document.body.innerHTML = "<h3 class='text-center mt-5'>ভিডিও পাওয়া যায়নি!</h3>";
+                }
+            }).catch((error) => {
+                console.error(error);
+                alert("ডাটা লোড হতে সমস্যা হয়েছে।");
+            });
+        } else {
+            // যদি কেউ সরাসরি post.html এ আসে ID ছাড়া
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>
