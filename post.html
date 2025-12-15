@@ -5,167 +5,178 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>ভিডিও লোড হচ্ছে...</title> 
-    <meta name="description" content="ভিডিও দেখুন">
+    <meta name="description" content="দয়া করে অপেক্ষা করুন...">
+    <meta name="robots" content="index, follow">
     
+    <meta name="keywords" content=""> 
+    
+    <link rel="canonical" href="" id="canonicalLink">
+
     <meta property="og:title" content="Viral Video">
-    <meta property="og:description" content="Watch this video now">
+    <meta property="og:description" content="Watch amazing viral videos">
     <meta property="og:image" content="">
-    <meta property="og:type" content="video.movie">
+    <meta property="og:type" content="video.other">
+    <meta property="og:url" content="">
+    
+    <script type="application/ld+json" id="schemaMarkup">
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "ভিডিও লোড হচ্ছে",
+          "url": "",
+          "description": "...",
+          "keywords": ""
+        }
+    </script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
-        
-        .content-container { max-width: 800px; margin: 0 auto; padding: 20px; }
-        
-        /* iframe কন্টেইনার: 16:9 রেশিও সেট করা */
-        .iframe-container {
+        body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; }
+        .container { max-width: 800px; margin-top: 20px; }
+        .video-wrapper {
             position: relative;
-            width: 100%;
-            padding-top: 56.25%; /* 16:9 Aspect Ratio (9/16 * 100) */
+            padding-bottom: 56.25%; /* 16:9 Ratio */
             height: 0;
             overflow: hidden;
-            background: black;
+            background: #000;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
-
-        .iframe-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
+        .video-wrapper iframe {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
         }
-        
-        .video-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #fff; }
-        .video-desc { color: #aaa; font-size: 15px; line-height: 1.6; background: #1e1e1e; padding: 15px; border-radius: 8px; margin-top: 15px; }
-        
-        .btn-download {
-            background: #27ae60;
-            color: white;
-            font-weight: bold;
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 10px;
-            display: block;
-            text-align: center;
-            text-decoration: none;
-        }
+        .title-text { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #fff; }
+        .desc-box { background: #1f1f1f; padding: 20px; border-radius: 8px; color: #ccc; margin-top: 20px; border-left: 4px solid #0d6efd; }
+        .btn-dl { width: 100%; padding: 12px; font-weight: bold; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="content-container">
-        <a href="index.html" class="btn btn-outline-light mb-3"><i class="fas fa-arrow-left"></i> হোম পেজ</a>
+<div class="container pb-5">
+    <a href="index.html" class="btn btn-outline-secondary mb-3 btn-sm"><i class="fas fa-arrow-left"></i> হোম পেজ</a>
 
-        <div id="loader" class="text-center mt-5">
-            <div class="spinner-border text-light" role="status"></div>
-            <p class="mt-2">ভিডিও লোড হচ্ছে...</p>
-        </div>
-
-        <div id="info-area" style="display: none;">
-            
-            <div class="iframe-container shadow-lg">
-                <iframe 
-                    id="videoIframe" 
-                    src="" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
-                </iframe>
-            </div>
-
-            <h1 id="videoTitle" class="video-title"></h1>
-            
-            <a id="downloadBtn" href="#" target="_blank" class="btn-download">
-                <i class="fas fa-download me-2"></i> ভিডিও ডাউনলোড করুন
-            </a>
-
-            <div class="video-desc">
-                <h5 class="text-white mb-2">Description</h5>
-                <p id="videoDesc" class="mb-0"></p>
-            </div>
-        </div>
+    <div id="loading" class="text-center p-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">ভিডিও তথ্য লোড করা হচ্ছে...</p>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <div id="content" style="display: none;">
+        <div class="video-wrapper">
+            <iframe id="videoFrame" src="" allowfullscreen></iframe>
+        </div>
 
-        // আপনার সঠিক কনফিগারেশন
-        const firebaseConfig = {
-            apiKey: "AIzaSyBvmM0i0oQyqE7OywtuPaNVwCIb3lcR3yA",
-            authDomain: "viral-video-2ddb4.firebaseapp.com",
-            databaseURL: "https://viral-video-2ddb4-default-rtdb.firebaseio.com",
-            projectId: "viral-video-2ddb4",
-            storageBucket: "viral-video-2ddb4.firebasestorage.app",
-            messagingSenderId: "371603329130",
-            appId: "1:371603329130:web:2125f1eb16b6bfb55e7a13",
-            measurementId: "G-L4481L78P1"
-        };
+        <h1 id="vidTitle" class="title-text"></h1>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        <a id="dlBtn" href="#" class="btn btn-success btn-dl shadow">
+            <i class="fas fa-download me-2"></i> ভিডিও ডাউনলোড করুন
+        </a>
 
-        // URL থেকে ID নেওয়া (যেমন: ?id=-OgXwn...)
-        const params = new URLSearchParams(window.location.search);
-        const videoId = params.get('id');
+        <div class="desc-box">
+            <h5 class="text-white mb-2">ভিডিও বিবরণ:</h5>
+            <p id="vidDesc" style="white-space: pre-wrap;"></p>
+        </div>
+    </div>
+</div>
 
-        if(videoId) {
-            const videoRef = ref(db, 'videos/' + videoId);
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-            get(videoRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    
-                    // --- 🔥 SEO ও মেটা ট্যাগ আপডেট: এই অংশটি Title এবং Description চেঞ্জ করবে 🔥 ---
-                    // ১. ব্রাউজার ট্যাবের টাইটেল সেট করা (Google এর জন্য)
-                    document.title = data.title; 
-                    
-                    // ২. মেটা ডেসক্রিপশন সেট করা (Google এর জন্য)
-                    document.querySelector('meta[name="description"]').setAttribute("content", data.description);
+<script>
+    // আপনার কনফিগারেশন
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvmM0i0oQyqE7OywtuPaNVwCIb3lcR3yA",
+        authDomain: "viral-video-2ddb4.firebaseapp.com",
+        databaseURL: "https://viral-video-2ddb4-default-rtdb.firebaseio.com",
+        projectId: "viral-video-2ddb4",
+        storageBucket: "viral-video-2ddb4.firebasestorage.app",
+        messagingSenderId: "371603329130",
+        appId: "1:371603329130:web:2125f1eb16b6bfb55e7a13",
+        measurementId: "G-L4481L78P1"
+    };
 
-                    // ৩. সোশ্যাল মিডিয়া ট্যাগ আপডেট
-                    document.querySelector('meta[property="og:title"]').setAttribute("content", data.title);
-                    document.querySelector('meta[property="og:description"]').setAttribute("content", data.description);
-                    document.querySelector('meta[property="og:image"]').setAttribute("content", data.thumbnail);
-                    // -------------------------------------------------------------------------
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-                    // ৪. UI এবং Iframe আপডেট
-                    // Iframe এর src সেট করা (YouTube/Drive Embed Link)
-                    document.getElementById('videoIframe').src = data.videoUrl;
-                    
-                    document.getElementById('videoTitle').innerText = data.title;
-                    document.getElementById('videoDesc').innerText = data.description;
-                    
-                    // ডাউনলোড বাটন
-                    const dlBtn = document.getElementById('downloadBtn');
-                    if(data.downloadUrl) {
-                        dlBtn.href = data.downloadUrl;
-                    } else {
-                        dlBtn.style.display = 'none'; // ডাউনলোড লিংক না থাকলে বাটন লুকাবে
-                    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get('id');
+    const currentUrl = window.location.href;
 
-                    // লোডার সরিয়ে কন্টেন্ট দেখানো
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('info-area').style.display = 'block';
+    if (videoId) {
+        const dataRef = db.ref('videos/' + videoId);
+        
+        dataRef.once('value').then((snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                
+                // যদি Keywords না থাকে, তাহলে Title থেকেই Keywords তৈরি করা হবে
+                const keywords = data.keywords ? data.keywords : data.title; 
 
+                // =================================================
+                // 🚀 SEO ও মেটা ট্যাগ আপডেট (Google এর জন্য) 🚀
+                // =================================================
+
+                // ১. টাইটেল ট্যাগ পরিবর্তন
+                document.title = data.title + " | Viral Video"; 
+
+                // ২. মেটা ডেসক্রিপশন পরিবর্তন
+                document.querySelector('meta[name="description"]').setAttribute("content", data.description);
+
+                // ৩. 🚀 মেটা Keywords আপডেট করা
+                document.querySelector('meta[name="keywords"]').setAttribute("content", keywords);
+                
+                // ৪. ক্যানোনিক্যাল লিংক আপডেট
+                document.getElementById('canonicalLink').href = currentUrl;
+
+                // ৫. ওপেন গ্রাফ ট্যাগ আপডেট
+                document.querySelector('meta[property="og:title"]').setAttribute("content", data.title);
+                document.querySelector('meta[property="og:description"]').setAttribute("content", data.description);
+                document.querySelector('meta[property="og:image"]').setAttribute("content", data.thumbnail);
+                document.querySelector('meta[property="og:url"]').setAttribute("content", currentUrl);
+                
+                // ৬. 🚀 Schema Markup (JSON-LD) আপডেট করা
+                const schemaData = {
+                    "@context": "https://schema.org",
+                    "@type": "WebPage", 
+                    "name": data.title,
+                    "url": currentUrl,
+                    "description": data.description,
+                    "keywords": keywords
+                };
+                // স্ক্রিপ্ট ট্যাগে JSON ডেটা ঢোকানো
+                document.getElementById('schemaMarkup').textContent = JSON.stringify(schemaData, null, 2);
+
+                // =================================================
+                // UI আপডেট (দৃশ্যমান অংশ)
+                // =================================================
+                
+                document.getElementById('videoFrame').src = data.videoUrl;
+                document.getElementById('vidTitle').innerText = data.title;
+                document.getElementById('vidDesc').innerText = data.description;
+                
+                // ডাউনলোড বাটন লজিক
+                if(data.downloadUrl && data.downloadUrl.trim() !== ""){
+                    document.getElementById('dlBtn').href = data.downloadUrl;
                 } else {
-                    document.body.innerHTML = "<h3 class='text-center mt-5 text-white'>ভিডিও পাওয়া যায়নি!</h3>";
+                    document.getElementById('dlBtn').style.display = 'none';
                 }
-            }).catch((error) => {
-                console.error(error);
-                document.body.innerHTML = "<h3 class='text-center mt-5 text-white'>ডাটা লোড হতে সমস্যা হয়েছে। ইন্টারনেট কানেকশন চেক করুন।</h3>";
-            });
-        } else {
-            // আইডি না থাকলে হোম পেজে ফেরত
-            window.location.href = "index.html";
-        }
-    </script>
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+            } else {
+                document.getElementById('loading').innerHTML = "<h3 class='text-danger'>ভিডিও পাওয়া যায়নি!</h3>";
+            }
+        }).catch((error) => {
+            console.error("Error:", error);
+            document.getElementById('loading').innerHTML = "<h3 class='text-danger'>ডাটা লোড হতে সমস্যা হয়েছে।</h3>";
+        });
+    } else {
+        window.location.href = "index.html";
+    }
+</script>
+
 </body>
 </html>
