@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>ভিডিও লোড হচ্ছে...</title>
+    <title>ভিডিও লোড হচ্ছে...</title> 
     <meta name="description" content="ভিডিও দেখুন">
     
     <meta property="og:title" content="Viral Video">
@@ -17,16 +17,29 @@
 
     <style>
         body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
-        .video-wrapper {
-            background: black;
-            width: 100%;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        video { width: 100%; max-height: 50vh; display: block; margin: 0 auto; }
         
         .content-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        
+        /* iframe কন্টেইনার: 16:9 রেশিও সেট করা */
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio (9/16 * 100) */
+            height: 0;
+            overflow: hidden;
+            background: black;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .iframe-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
         
         .video-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #fff; }
         .video-desc { color: #aaa; font-size: 15px; line-height: 1.6; background: #1e1e1e; padding: 15px; border-radius: 8px; margin-top: 15px; }
@@ -43,24 +56,30 @@
             text-align: center;
             text-decoration: none;
         }
-        .btn-download:hover { background: #219150; color: white; }
     </style>
 </head>
 <body>
 
-    <div class="video-wrapper">
-        <video id="mainVideo" controls autoplay playsinline>
-            <source src="" type="video/mp4">
-            আপনার ব্রাউজার ভিডিও সাপোর্ট করছে না।
-        </video>
-    </div>
-
     <div class="content-container">
-        <div id="loader" class="text-center mt-3">
+        <a href="index.html" class="btn btn-outline-light mb-3"><i class="fas fa-arrow-left"></i> হোম পেজ</a>
+
+        <div id="loader" class="text-center mt-5">
             <div class="spinner-border text-light" role="status"></div>
+            <p class="mt-2">ভিডিও লোড হচ্ছে...</p>
         </div>
 
         <div id="info-area" style="display: none;">
+            
+            <div class="iframe-container shadow-lg">
+                <iframe 
+                    id="videoIframe" 
+                    src="" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+
             <h1 id="videoTitle" class="video-title"></h1>
             
             <a id="downloadBtn" href="#" target="_blank" class="btn-download">
@@ -70,12 +89,6 @@
             <div class="video-desc">
                 <h5 class="text-white mb-2">Description</h5>
                 <p id="videoDesc" class="mb-0"></p>
-            </div>
-            
-            <div class="mt-4 text-center">
-                <a href="index.html" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-arrow-left me-2"></i> সব ভিডিও দেখুন
-                </a>
             </div>
         </div>
     </div>
@@ -110,23 +123,22 @@
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     
-                    // --- SEO ম্যাজিক (Google এর জন্য) ---
-                    document.title = data.title; // ব্রাউজার ট্যাবের নাম চেঞ্জ হবে
+                    // --- 🔥 SEO ও মেটা ট্যাগ আপডেট: এই অংশটি Title এবং Description চেঞ্জ করবে 🔥 ---
+                    // ১. ব্রাউজার ট্যাবের টাইটেল সেট করা (Google এর জন্য)
+                    document.title = data.title; 
                     
-                    // মেটা ডেসক্রিপশন সেট করা
-                    const metaDesc = document.querySelector('meta[name="description"]');
-                    if(metaDesc) metaDesc.setAttribute("content", data.description);
+                    // ২. মেটা ডেসক্রিপশন সেট করা (Google এর জন্য)
+                    document.querySelector('meta[name="description"]').setAttribute("content", data.description);
 
-                    // সোশ্যাল মিডিয়া ট্যাগ আপডেট
+                    // ৩. সোশ্যাল মিডিয়া ট্যাগ আপডেট
                     document.querySelector('meta[property="og:title"]').setAttribute("content", data.title);
                     document.querySelector('meta[property="og:description"]').setAttribute("content", data.description);
                     document.querySelector('meta[property="og:image"]').setAttribute("content", data.thumbnail);
-                    // -----------------------------------
+                    // -------------------------------------------------------------------------
 
-                    // প্লেয়ার এবং ইনফো আপডেট
-                    const videoEl = document.getElementById('mainVideo');
-                    videoEl.src = data.videoUrl;
-                    videoEl.poster = data.thumbnail;
+                    // ৪. UI এবং Iframe আপডেট
+                    // Iframe এর src সেট করা (YouTube/Drive Embed Link)
+                    document.getElementById('videoIframe').src = data.videoUrl;
                     
                     document.getElementById('videoTitle').innerText = data.title;
                     document.getElementById('videoDesc').innerText = data.description;
@@ -144,13 +156,14 @@
                     document.getElementById('info-area').style.display = 'block';
 
                 } else {
-                    document.body.innerHTML = "<h3 class='text-center mt-5'>ভিডিও পাওয়া যায়নি!</h3>";
+                    document.body.innerHTML = "<h3 class='text-center mt-5 text-white'>ভিডিও পাওয়া যায়নি!</h3>";
                 }
             }).catch((error) => {
                 console.error(error);
-                alert("ডাটা লোড হতে সমস্যা হয়েছে। ইন্টারনেট কানেকশন চেক করুন।");
+                document.body.innerHTML = "<h3 class='text-center mt-5 text-white'>ডাটা লোড হতে সমস্যা হয়েছে। ইন্টারনেট কানেকশন চেক করুন।</h3>";
             });
         } else {
+            // আইডি না থাকলে হোম পেজে ফেরত
             window.location.href = "index.html";
         }
     </script>
