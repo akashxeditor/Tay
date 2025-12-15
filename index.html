@@ -3,43 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আমার ভিডিও গ্যালারি</title>
+    <title>ভাইরাল ভিডিও গ্যালারি</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background: #f0f2f5; }
+        body { background: #f0f2f5; font-family: 'Arial', sans-serif; }
         .video-card {
             cursor: pointer;
             transition: transform 0.2s;
             background: white;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             height: 100%;
             text-decoration: none;
             color: black;
             display: block;
         }
-        .video-card:hover { transform: scale(1.02); }
+        .video-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .thumb-img {
             width: 100%;
             height: 180px;
             object-fit: cover;
+            background: #ddd;
+        }
+        .play-icon {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            color: white;
+            opacity: 0.8;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
         .card-body { padding: 15px; }
-        .card-title { font-size: 16px; font-weight: bold; margin: 0; }
+        .card-title { font-size: 16px; font-weight: bold; margin: 0; line-height: 1.4; }
+        .card-time { font-size: 12px; color: #888; margin-top: 5px; }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
-    <nav class="navbar navbar-dark bg-primary mb-4">
+    <nav class="navbar navbar-dark bg-primary sticky-top mb-4 shadow">
         <div class="container">
-            <span class="navbar-brand mb-0 h1">Viral Videos</span>
+            <span class="navbar-brand mb-0 h1"><i class="fas fa-video me-2"></i> Viral Videos</span>
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container mb-5">
         <div id="video-grid" class="row g-3">
-            <div class="text-center mt-5">Loading videos...</div>
+            <div class="text-center mt-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">ভিডিও লোড হচ্ছে...</p>
+            </div>
         </div>
     </div>
 
@@ -47,42 +63,43 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // ⚠️ আপনার Firebase Config এখানে বসান (Admin panel এর মতোই)
+        // আপনার প্রজেক্টের সঠিক কনফিগারেশন
         const firebaseConfig = {
             apiKey: "AIzaSyBvmM0i0oQyqE7OywtuPaNVwCIb3lcR3yA",
-  authDomain: "viral-video-2ddb4.firebaseapp.com",
-  databaseURL: "https://viral-video-2ddb4-default-rtdb.firebaseio.com",
-  projectId: "viral-video-2ddb4",
-  storageBucket: "viral-video-2ddb4.firebasestorage.app",
-  messagingSenderId: "371603329130",
-  appId: "1:371603329130:web:2125f1eb16b6bfb55e7a13",
-  measurementId: "G-L4481L78P1
+            authDomain: "viral-video-2ddb4.firebaseapp.com",
+            databaseURL: "https://viral-video-2ddb4-default-rtdb.firebaseio.com",
+            projectId: "viral-video-2ddb4",
+            storageBucket: "viral-video-2ddb4.firebasestorage.app",
+            messagingSenderId: "371603329130",
+            appId: "1:371603329130:web:2125f1eb16b6bfb55e7a13",
+            measurementId: "G-L4481L78P1"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const grid = document.getElementById('video-grid');
 
-        // ডাটাবেস থেকে সব ভিডিও আনা
+        // ডাটাবেস থেকে ভিডিও আনা
         onValue(ref(db, 'videos'), (snapshot) => {
             grid.innerHTML = "";
             
             if(snapshot.exists()){
-                // ডাটা রিভার্স করা (নতুন ভিডিও আগে দেখাবে)
                 const videos = [];
                 snapshot.forEach(child => {
                     videos.push({id: child.key, ...child.val()});
                 });
+                // নতুন ভিডিও আগে দেখাবে
                 videos.reverse();
 
                 videos.forEach(video => {
-                    // post.html এ id পাঠানো হচ্ছে (?id=...)
                     const html = `
-                        <div class="col-6 col-md-4 col-lg-3">
-                            <a href="post.html?id=${video.id}" class="video-card">
-                                <img src="${video.thumbnail}" class="thumb-img" alt="${video.title}" onerror="this.src='https://via.placeholder.com/300'">
+                        <div class="col-12 col-md-4 col-lg-3">
+                            <a href="post.html?id=${video.id}" class="video-card position-relative">
+                                <img src="${video.thumbnail}" class="thumb-img" alt="${video.title}" onerror="this.src='https://via.placeholder.com/300x180?text=No+Image'">
+                                <i class="fas fa-play-circle play-icon"></i>
                                 <div class="card-body">
                                     <p class="card-title text-truncate">${video.title}</p>
+                                    <p class="card-time"><i class="far fa-clock"></i> Just Now</p>
                                 </div>
                             </a>
                         </div>
@@ -90,7 +107,7 @@
                     grid.innerHTML += html;
                 });
             } else {
-                grid.innerHTML = "<p class='text-center'>কোনো ভিডিও নেই</p>";
+                grid.innerHTML = "<div class='text-center w-100'>কোনো ভিডিও নেই</div>";
             }
         });
     </script>
