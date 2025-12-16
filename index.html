@@ -31,6 +31,7 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03); 
             height: 65px; 
             transition: all 0.3s ease;
+            z-index: 1000;
         }
         .app-title { font-weight: 700; color: var(--primary-color); font-size: 1.3rem; letter-spacing: -0.5px; }
         
@@ -78,7 +79,7 @@
         .bottom-nav-container {
             position: fixed; bottom: 20px; left: 0; width: 100%;
             display: flex; justify-content: center; z-index: 1000;
-            pointer-events: none; /* Let clicks pass through to sides */
+            pointer-events: none;
         }
         .floating-nav {
             pointer-events: auto;
@@ -96,7 +97,6 @@
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .nav-item-custom i { font-size: 1.4rem; margin-bottom: 2px; }
-        .nav-item-custom span { font-size: 0.7rem; font-weight: 500; display: none; }
         
         .nav-item-custom.active { color: var(--primary-color); transform: translateY(-5px); }
         .nav-item-custom.active i { filter: drop-shadow(0 4px 6px rgba(108, 92, 231, 0.3)); }
@@ -105,6 +105,8 @@
         .webview-container { width: 100%; height: calc(100vh - 120px); border-radius: 12px; overflow: hidden; background: white; border: none; }
         iframe { width: 100%; height: 100%; border: none; }
         .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 100px; color: var(--secondary-color); }
+        .animate-fade { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -115,7 +117,7 @@
             <div class="d-flex align-items-center w-100" id="default-nav">
                 <span class="app-title"><i class="bi bi-play-circle-fill me-2"></i>Viral Clips</span>
                 <div class="ms-auto d-flex gap-3">
-                    <i class="bi bi-search fs-5 text-secondary" onclick="toggleSearch(true)" style="cursor: pointer;"></i>
+                    <i class="bi bi-search fs-5 text-secondary" onclick="switchTab('home'); toggleSearch(true);" style="cursor: pointer;"></i>
                     <i class="bi bi-bell fs-5 text-secondary"></i> 
                 </div>
             </div>
@@ -139,11 +141,11 @@
             </div>
         </div>
 
-        <div id="section-news" class="d-none">
+        <div id="section-news" class="d-none animate-fade">
             <div class="webview-container"><iframe src="https://www.bbc.com/bengali"></iframe></div>
         </div>
 
-        <div id="section-setting" class="d-none">
+        <div id="section-setting" class="d-none animate-fade">
             <div class="webview-container"><iframe src="https://example.com"></iframe></div>
         </div>
     </div>
@@ -167,47 +169,64 @@
         const grid = document.getElementById('grid');
         const searchInput = document.getElementById('searchInput');
         
-        // গ্লোবাল ভেরিয়েবল সব ভিডিও স্টোর করার জন্য (সার্চের জন্য প্রয়োজন)
+        // গ্লোবাল ভেরিয়েবল (Global Storage)
         let allVideosData = [];
 
         // --- Tab Switching Logic ---
         function switchTab(tabName) {
+            // Hide all sections and remove active class from buttons
             document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('d-none'));
             document.querySelectorAll('.nav-item-custom').forEach(btn => btn.classList.remove('active'));
             
-            document.getElementById('section-' + tabName).classList.remove('d-none');
+            // Show the target section
+            const targetSection = document.getElementById('section-' + tabName);
+            if(targetSection) targetSection.classList.remove('d-none');
             
-            // Find button by icon since we removed spans for clean look, or use index
-            // Simple approach: Reset all, then add active based on onclick attribute match
+            // Set the active state for the button
+            const icons = { 'home': 0, 'news': 1, 'setting': 2 };
             const btns = document.querySelectorAll('.nav-item-custom');
-            if(tabName === 'home') btns[0].classList.add('active');
-            if(tabName === 'news') btns[1].classList.add('active');
-            if(tabName === 'setting') btns[2].classList.add('active');
+            if(btns[icons[tabName]]) btns[icons[tabName]].classList.add('active');
+
+            // Hide search bar when switching away from home
+            if (tabName !== 'home') {
+                toggleSearch(false);
+            }
         }
 
         // --- Search Toggle UI ---
         function toggleSearch(show) {
             const searchNav = document.getElementById('search-nav');
             if (show) {
-                searchNav.classList.add('active');
-                searchInput.focus();
+                // Only activate search if we are on the 'home' tab
+                if (!document.getElementById('section-home').classList.contains('d-none')) {
+                    searchNav.classList.add('active');
+                    setTimeout(() => searchInput.focus(), 100); 
+                }
             } else {
                 searchNav.classList.remove('active');
-                searchInput.value = ''; // Clear input
-                renderVideos(allVideosData); // Reset grid
+                if (searchInput.value) {
+                    searchInput.value = ''; 
+                    renderVideos(allVideosData); // Reset grid on clear/close
+                }
             }
         }
 
-        // --- Real-time Search Logic ---
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            const filtered = allVideosData.filter(v => 
-                v.title.toLowerCase().includes(query)
-            );
+        // --- FIXED: Robust Search Logic ---
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            
+            if (!allVideosData.length) return; 
+
+            const filtered = allVideosData.filter(v => {
+                // Safety Check: Avoid crashing if 'title' is missing
+                const title = v.title ? v.title.toString().toLowerCase() : "";
+                return title.includes(query);
+            });
+            
             renderVideos(filtered);
         });
 
-        // --- Render Function (Reusable) ---
+        // --- Render Function ---
         function renderVideos(videos) {
             grid.innerHTML = "";
 
@@ -223,16 +242,17 @@
             videos.forEach(v => {
                 const videoId = v.id || v.k || v.key;
                 const timeString = v.time ? new Date(v.time).toLocaleDateString() : 'Just now';
+                const thumb = v.thumbnail || 'https://placehold.co/600x400/e0e0e0/888888?text=No+Image';
                 
                 grid.innerHTML += `
-                    <div class="col-12 col-md-4 col-lg-3">
+                    <div class="col-12 col-md-4 col-lg-3 animate-fade">
                         <a href="post.html?id=${videoId}" class="video-card">
                             <div class="thumb-wrapper">
-                                <img src="${v.thumbnail}" class="thumb" onerror="this.src='https://placehold.co/600x400/e0e0e0/888888?text=Video'">
+                                <img src="${thumb}" class="thumb" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e0e0/888888?text=Error'">
                                 <div class="play-icon-overlay"><i class="bi bi-play-fill fs-4"></i></div>
                             </div>
                             <div class="card-body">
-                                <h6 class="video-title">${v.title}</h6>
+                                <h6 class="video-title">${v.title || 'Untitled Video'}</h6>
                                 <div class="video-meta">
                                     <i class="bi bi-clock"></i> <span>${timeString}</span>
                                 </div>
@@ -244,27 +264,36 @@
         }
 
         // --- Data Fetching ---
-        fetch(API_URL)
-            .then(response => {
-                if (!response.ok) throw new Error("API Error");
-                return response.json();
-            })
-            .then(data => {
-                let videos = Array.isArray(data) ? data : (data.videos || Object.values(data));
-                
-                // Store in global variable
-                allVideosData = videos.reverse();
-                
-                // Save to local storage
-                localStorage.setItem('videoList', JSON.stringify(allVideosData));
+        function fetchVideos() {
+             // Show loading spinner
+            grid.innerHTML = `<div class="loading-container"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading videos...</p></div>`;
 
-                // Initial Render
-                renderVideos(allVideosData);
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                grid.innerHTML = "<div class='col-12 text-center text-danger mt-5'><p>Failed to load videos.</p></div>";
-            });
+            fetch(API_URL)
+                .then(response => {
+                    if (!response.ok) throw new Error("API Error");
+                    return response.json();
+                })
+                .then(data => {
+                    let videos = Array.isArray(data) ? data : (data.videos || Object.values(data));
+                    
+                    // Store the reversed list
+                    allVideosData = videos.reverse();
+                    
+                    // Save to local storage
+                    localStorage.setItem('videoList', JSON.stringify(allVideosData));
+
+                    // Initial Render
+                    renderVideos(allVideosData);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    grid.innerHTML = "<div class='col-12 text-center text-danger mt-5'><p>Failed to load videos. Please check the network connection.</p></div>";
+                });
+        }
+
+        // Call the fetch function when the page loads
+        document.addEventListener('DOMContentLoaded', fetchVideos);
+
     </script>
 </body>
-                </html>
+</html>
