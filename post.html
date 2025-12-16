@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Playing Video</title> 
+    <title>Video Player</title> 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
@@ -11,23 +11,8 @@
         body { background-color: #0f172a; color: #fff; font-family: sans-serif; }
         .container { max-width: 800px; padding-top: 20px; }
         
-        /* ভিডিও প্লেয়ার ডিজাইন (16:9) */
-        .video-wrapper { 
-            position: relative; 
-            padding-bottom: 56.25%; 
-            height: 0; 
-            background: black; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            margin-top: 20px; 
-            border: 1px solid #333;
-        }
-        .video-wrapper iframe { 
-            position: absolute; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            border: 0; 
-        }
+        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; background: black; border-radius: 12px; overflow: hidden; margin-top: 20px; border: 1px solid #333; }
+        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
 
         .btn-share { width: 100%; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); margin-top: 15px; padding: 10px; border-radius: 8px; }
         .btn-dl { width: 100%; background: #28a745; color: white; border: none; margin-top: 10px; padding: 10px; border-radius: 8px; text-decoration: none; display: inline-block; text-align: center;}
@@ -73,63 +58,50 @@
     </div>
 
     <script>
-        // --- আপনার Supabase Edge Function URL ---
-        const API_URL = "https://zaddbqhvwakcnqelwaxs.supabase.co/functions/v1/rapid-worker";
         
         // ১. URL থেকে আইডি বের করা
         const params = new URLSearchParams(window.location.search);
         const targetId = params.get('id');
 
         if(!targetId) {
-            showError("No video ID found in URL.");
+            showError("No video ID provided. Returning to home.");
+            setTimeout(() => window.location.href = "index.html", 2000);
         } else {
-            // আইডি থাকলে ডাটা ফেচ শুরু
-            fetchVideoData(targetId);
+            loadVideoFromStorage(targetId);
         }
 
-        async function fetchVideoData(id) {
+        function loadVideoFromStorage(id) {
+            // ২. লোকাল স্টোরেজ থেকে ডাটা লোড করা
+            const storedData = localStorage.getItem('videoList');
+            
+            if (!storedData) {
+                showError("Video list not found. Returning to home.");
+                setTimeout(() => window.location.href = "index.html", 2000);
+                return;
+            }
+
             try {
-                // ২. API কল করা (id সহ)
-                // আপনার ফাংশন যদি ?id= সাপোর্ট করে তবে এটি কাজ করবে, 
-                // আর যদি সব ডাটা দেয় তবে নিচের ফিল্টারিং লজিক কাজ করবে।
-                const response = await fetch(`${API_URL}?id=${id}`);
+                const videos = JSON.parse(storedData);
                 
-                if (!response.ok) throw new Error("Network response was not ok");
-                
-                const data = await response.json();
-                
-                // ডাটা প্রসেসিং (Array বা Single Object হ্যান্ডেল করা)
-                let video = null;
-                
-                if (Array.isArray(data)) {
-                    // যদি লিস্ট আসে, তাহলে আইডি দিয়ে খুঁজবে
-                    // নোট: আপনার ডাটাবেসে আইডির ফিল্ড 'id' নাকি 'key' সেটা চেক করে নেবেন। 
-                    // সাধারণত Supabase এ 'id' থাকে, Firebase থেকে মাইগ্রেট করলে 'key' বা '-Og...' হতে পারে।
-                    video = data.find(v => v.id == id || v.key == id || v.k == id);
-                } else {
-                    // যদি সরাসরি অবজেক্ট আসে
-                    video = data;
-                }
+                // ৩. ID দিয়ে স্পেসিফিক ভিডিও খুঁজে বের করা
+                const video = videos.find(v => v.id == id || v.k == id || v.key == id);
 
                 if (video) {
                     displayVideo(video);
                 } else {
-                    showError("Video not found!");
+                    showError("Video not found in stored list!");
                 }
 
-            } catch (error) {
-                console.error(error);
-                showError("Error loading video data.");
+            } catch (e) {
+                showError("Error processing stored data.");
             }
         }
 
         function displayVideo(data) {
-            // --- ৩. YouTube Iframe Logic ---
-            // 'videoUrl' অথবা 'link' যে ফিল্ডেই ইউআরএল থাকুক না কেন
+            // ৪. YouTube Iframe Logic
             let rawUrl = data.videoUrl || data.link || "";
             let embedUrl = rawUrl;
 
-            // ইউটিউব লিংক কনভার্ট করা (youtu.be -> embed)
             if (rawUrl.includes('youtu.be/')) {
                 const videoId = rawUrl.split('youtu.be/')[1];
                 embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
@@ -142,10 +114,10 @@
             document.getElementById('videoFrame').src = embedUrl;
             document.getElementById('vidTitle').innerText = data.title || "No Title";
             document.getElementById('vidDesc').innerText = data.description || data.desc || "";
+            document.title = data.title || "Video";
             
-            // ডাউনলোড বাটন হ্যান্ডেলিং
             const dlBtn = document.getElementById('dlBtn');
-            const dlUrl = data.downloadUrl || data.link; // ডাউনলোড লিংক ফিল্ড
+            const dlUrl = data.downloadUrl || data.link;
             
             if (dlUrl) {
                 dlBtn.href = dlUrl;
@@ -153,7 +125,6 @@
                 dlBtn.style.display = 'none';
             }
 
-            // লোডার লুকিয়ে ভিডিও দেখানো
             document.getElementById('loader').style.display = 'none';
             document.getElementById('content').style.display = 'block';
         }
