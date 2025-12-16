@@ -20,7 +20,7 @@
         body { 
             background-color: var(--bg-color); 
             font-family: 'Poppins', sans-serif; 
-            padding-bottom: 100px; /* Space for floating nav */
+            padding-bottom: 100px; 
             padding-top: 70px; 
         }
 
@@ -110,7 +110,7 @@
         }
         .loading-more { 
             text-align: center; padding: 20px; 
-            display: none; /* Hide by default */
+            display: none; 
         }
         .animate-fade { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -182,14 +182,13 @@
         const loadMoreIndicator = document.getElementById('load-more-indicator');
         
         // গ্লোবাল ভেরিয়েবল
-        let allVideosData = []; // সমস্ত ভিডিও ডাটা
-        let videosToShow = 4; // ডিফল্টভাবে দেখানোর সংখ্যা
-        const videosPerLoad = 8; // প্রতিবার স্ক্রল করলে কতগুলো ভিডিও লোড হবে
-        let currentVideoIndex = 0; // কতগুলো ভিডিও দেখানো হয়েছে তার ট্র্যাক
+        let allVideosData = [];
+        let videosToShow = 4;
+        const videosPerLoad = 8; 
+        let currentVideoIndex = 0;
 
         // --- Tab Switching Logic ---
         function switchTab(tabName) {
-            // ... (আগের মতোই)
             document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('d-none'));
             document.querySelectorAll('.nav-item-custom').forEach(btn => btn.classList.remove('active'));
             
@@ -201,11 +200,12 @@
             if(btns[icons[tabName]]) btns[icons[tabName]].classList.add('active');
 
             if (tabName === 'home') {
-                // Home ট্যাবে ফিরে আসলে যদি ডাটা লোড করা থাকে, তাহলে শুধুমাত্র প্রথম ৪টি ভিডিও রেন্ডার করবে
-                if (allVideosData.length > 0) {
-                    resetAndRenderInitialVideos();
+                if (allVideosData.length > 0 && searchInput.value === '') {
+                   // হোম ট্যাবে ফিরলে এবং সার্চ খালি থাকলে ডিফল্ট ভিউ দেখাবে
+                   // তবে যদি আগে থেকেই লোড করা থাকে তবে রিলোড করবে না (Optional optimization)
+                   if(grid.innerHTML === "") resetAndRenderInitialVideos();
+                   window.addEventListener('scroll', handleScroll);
                 }
-                window.addEventListener('scroll', handleScroll);
             } else {
                 window.removeEventListener('scroll', handleScroll);
                 toggleSearch(false);
@@ -214,91 +214,89 @@
 
         // --- Search Toggle UI ---
         function toggleSearch(show) {
-            // ... (আগের মতোই)
             const searchNav = document.getElementById('search-nav');
             if (show) {
                 if (!document.getElementById('section-home').classList.contains('d-none')) {
                     searchNav.classList.add('active');
                     setTimeout(() => searchInput.focus(), 100); 
-                    // Search চালু হলে স্ক্রল ইভেন্ট বন্ধ
-                    window.removeEventListener('scroll', handleScroll);
+                    window.removeEventListener('scroll', handleScroll); // সার্চের সময় স্ক্রল লোডিং বন্ধ
                 }
             } else {
                 searchNav.classList.remove('active');
-                if (searchInput.value) {
-                    searchInput.value = ''; 
-                    resetAndRenderInitialVideos(); // Reset grid on clear/close
-                }
-                // Search বন্ধ হলে স্ক্রল ইভেন্ট চালু
+                searchInput.value = ''; 
+                resetAndRenderInitialVideos(); // সার্চ বন্ধ করলে ডিফল্ট অবস্থায় ফিরে যাবে
                 window.addEventListener('scroll', handleScroll);
             }
         }
         
-        // --- Search Logic (Only searches on the currently rendered videos) ---
+        // --- FIXED: Search Functionality ---
         searchInput.addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase().trim();
             
             if (!allVideosData.length) return; 
+
+            // ১. যদি সার্চ বক্স খালি করে দেওয়া হয় (Backspace দিয়ে)
+            if (query.length === 0) {
+                resetAndRenderInitialVideos(); // আবার নরমাল ৪টি ভিডিও দেখাবে
+                window.addEventListener('scroll', handleScroll); // স্ক্রল অন করবে
+                return;
+            }
             
-            // Search Mode-এ পুরো ডাটা সেট থেকে ফিল্টার করবে
+            // ২. সার্চ মোড: স্ক্রল লোডিং বন্ধ এবং লোডার হাইড
+            window.removeEventListener('scroll', handleScroll);
+            loadMoreIndicator.style.display = 'none';
+
+            // ৩. ফিল্টারিং লজিক
             const filtered = allVideosData.filter(v => {
                 const title = v.title ? v.title.toString().toLowerCase() : "";
                 return title.includes(query);
             });
             
-            // Search result-এর জন্য সম্পূর্ণ ডাটা রেন্ডার হবে, লোড মোর হবে না
+            // ৪. রেজাল্ট রেন্ডার (পুরো গ্রিড ক্লিয়ার করে)
             grid.innerHTML = "";
-            renderVideosSegment(filtered, true); // true মানে এটি সার্চ রেজাল্ট, তাই লোড মোর লাগবে না
+            renderVideosSegment(filtered, true); 
         });
 
 
-        // --- New: Load More Logic ---
+        // --- Load More Logic ---
         function loadMoreVideos() {
             if (currentVideoIndex >= allVideosData.length) {
                 loadMoreIndicator.style.display = 'none';
-                return; // সব ভিডিও দেখানো হয়ে গেছে
+                return;
             }
             
             loadMoreIndicator.style.display = 'block';
 
-            // এই সেগমেন্টে ভিডিও রেন্ডার হবে
             const segment = allVideosData.slice(currentVideoIndex, currentVideoIndex + videosPerLoad);
-            renderVideosSegment(segment, false); // false মানে এটি লোড মোর সেগমেন্ট
+            renderVideosSegment(segment, false);
             
             currentVideoIndex += videosPerLoad;
 
-            // Indicator hide after a small delay (to simulate loading)
             setTimeout(() => {
                 loadMoreIndicator.style.display = 'none';
-                if (currentVideoIndex >= allVideosData.length) {
-                    // Optionally show an "End of content" message
-                    // grid.innerHTML += '<div class="col-12 text-center text-muted mt-3 mb-5"><p>You reached the end.</p></div>';
-                }
             }, 500);
         }
 
-        // --- New: Scroll Event Handler ---
+        // --- Scroll Event Handler ---
         function handleScroll() {
-            // Check if user has scrolled to the bottom (within a 200px buffer)
             const scrollThreshold = document.documentElement.scrollHeight - window.innerHeight - 200;
             
             if (window.scrollY > scrollThreshold && currentVideoIndex < allVideosData.length) {
-                // স্ক্রল ইভেন্টটি যাতে বারবার ট্রিগার না হয়, তার জন্য একটি ছোট ট্রিক:
-                // ইভেন্ট লিসেনারটি আপাতত বন্ধ করে দেওয়া
                 window.removeEventListener('scroll', handleScroll);
                 loadMoreVideos();
-                // লোড হওয়ার পর ইভেন্ট লিসেনারটি আবার চালু করা
                 setTimeout(() => {
-                    window.addEventListener('scroll', handleScroll);
+                    // সার্চ বক্সে কিছু লেখা থাকলে স্ক্রল অন হবে না
+                    if(searchInput.value === '') {
+                        window.addEventListener('scroll', handleScroll);
+                    }
                 }, 1000); 
             }
         }
 
-        // --- Core Rendering Function (Renders a segment of videos) ---
+        // --- Core Rendering Function ---
         function renderVideosSegment(videos, isSearch=false) {
-            // যদি এটি সার্চ রেজাল্ট হয়, তাহলে grid খালি করে সব নতুন করে রেন্ডার করবে
             if(isSearch) {
-                grid.innerHTML = "";
+                // সার্চের ক্ষেত্রে গ্রিড আগেই খালি করা হয়, এখানে চেক করা হচ্ছে রেজাল্ট আছে কিনা
                 if(videos.length === 0) {
                     grid.innerHTML = `<div class='col-12 text-center text-muted mt-5'><i class='bi bi-search display-1 opacity-25'></i><p class='mt-3'>No videos found</p></div>`;
                     return;
@@ -310,7 +308,6 @@
                 const timeString = v.time ? new Date(v.time).toLocaleDateString() : 'Just now';
                 const thumb = v.thumbnail || 'https://placehold.co/600x400/e0e0e0/888888?text=No+Image';
                 
-                // insertAdjacentHTML ব্যবহার করে গ্রিডের শেষে ভিডিও যোগ করা
                 grid.insertAdjacentHTML('beforeend', `
                     <div class="col-12 col-md-4 col-lg-3 animate-fade">
                         <a href="post.html?id=${videoId}" class="video-card">
@@ -330,10 +327,10 @@
             });
         }
         
-        // --- New: Function to reset index and render initial 4 videos ---
+        // --- Reset Function ---
         function resetAndRenderInitialVideos() {
             currentVideoIndex = 0;
-            grid.innerHTML = ""; // Clear the grid
+            grid.innerHTML = "";
             
             const initialVideos = allVideosData.slice(0, videosToShow);
             renderVideosSegment(initialVideos, false);
@@ -357,19 +354,16 @@
                     allVideosData = videos.reverse();
                     localStorage.setItem('videoList', JSON.stringify(allVideosData));
 
-                    // Initial Render: শুধুমাত্র প্রথম 4টি ভিডিও দেখাবে
                     resetAndRenderInitialVideos(); 
 
-                    // স্ক্রল ইভেন্ট লিসেনার যোগ করা
                     window.addEventListener('scroll', handleScroll);
                 })
                 .catch(error => {
                     console.error("Error:", error);
-                    grid.innerHTML = "<div class='col-12 text-center text-danger mt-5'><p>Failed to load videos. Please check the network connection.</p></div>";
+                    grid.innerHTML = "<div class='col-12 text-center text-danger mt-5'><p>Failed to load videos.</p></div>";
                 });
         }
 
-        // Call the fetch function when the page loads
         document.addEventListener('DOMContentLoaded', fetchVideos);
     </script>
 </body>
