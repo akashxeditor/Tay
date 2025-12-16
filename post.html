@@ -3,180 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>ভিডিও লোড হচ্ছে...</title> 
-    <meta name="description" content="দয়া করে অপেক্ষা করুন...">
-    <meta name="robots" content="index, follow">
-    
-    <meta name="keywords" content=""> 
-    
-    <link rel="canonical" href="" id="canonicalLink">
-
-    <meta property="og:title" content="Viral Video">
-    <meta property="og:description" content="Watch amazing viral videos">
-    <meta property="og:image" content="">
-    <meta property="og:type" content="video.other">
-    <meta property="og:url" content="">
-    
-    <script type="application/ld+json" id="schemaMarkup">
-        {
-          "@context": "https://schema.org",
-          "@type": "WebPage",
-          "name": "ভিডিও লোড হচ্ছে",
-          "url": "",
-          "description": "...",
-          "keywords": ""
-        }
-    </script>
-
+    <title>Viral Video App</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
     <style>
-        body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; }
-        .container { max-width: 800px; margin-top: 20px; }
-        .video-wrapper {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 Ratio */
-            height: 0;
-            overflow: hidden;
-            background: #000;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        }
-        .video-wrapper iframe {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
-        }
-        .title-text { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #fff; }
-        .desc-box { background: #1f1f1f; padding: 20px; border-radius: 8px; color: #ccc; margin-top: 20px; border-left: 4px solid #0d6efd; }
-        .btn-dl { width: 100%; padding: 12px; font-weight: bold; margin-bottom: 15px; }
+        /* স্টাইল একই রাখা হয়েছে */
+        body { background-color: #f4f7fa; font-family: sans-serif; padding-top: 60px; }
+        .video-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-decoration: none; color: inherit; display: block; margin-bottom: 20px; }
+        .thumb { width: 100%; height: 200px; object-fit: cover; background: #ddd; }
+        .card-body { padding: 15px; }
+        .video-title { font-weight: 600; font-size: 1rem; color: #333; }
+        .loading-container { text-align: center; margin-top: 50px; }
     </style>
 </head>
 <body>
 
-<div class="container pb-5">
-    <a href="index.html" class="btn btn-outline-secondary mb-3 btn-sm"><i class="fas fa-arrow-left"></i> হোম পেজ</a>
-
-    <div id="loading" class="text-center p-5">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 text-muted">ভিডিও তথ্য লোড করা হচ্ছে...</p>
-    </div>
-
-    <div id="content" style="display: none;">
-        <div class="video-wrapper">
-            <iframe id="videoFrame" src="" allowfullscreen></iframe>
+    <nav class="navbar fixed-top bg-white shadow-sm">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1"><i class="bi bi-play-circle-fill text-primary"></i> Viral Clips</span>
         </div>
+    </nav>
 
-        <h1 id="vidTitle" class="title-text"></h1>
-
-        <a id="dlBtn" href="#" class="btn btn-success btn-dl shadow">
-            <i class="fas fa-download me-2"></i> ভিডিও ডাউনলোড করুন
-        </a>
-
-        <div class="desc-box">
-            <h5 class="text-white mb-2">ভিডিও বিবরণ:</h5>
-            <p id="vidDesc" style="white-space: pre-wrap;"></p>
+    <div class="container mt-3">
+        <div id="grid" class="row">
+            <div class="loading-container">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
         </div>
     </div>
-</div>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+        // আপনার Supabase Edge Function URL
+        const API_URL = "https://zaddbqhvwakcnqelwaxs.supabase.co/functions/v1/rapid-worker";
+        const grid = document.getElementById('grid');
 
-<script>
-    // আপনার কনফিগারেশন
-    const firebaseConfig = {
-        apiKey: "AIzaSyBvmM0i0oQyqE7OywtuPaNVwCIb3lcR3yA",
-        authDomain: "viral-video-2ddb4.firebaseapp.com",
-        databaseURL: "https://viral-video-2ddb4-default-rtdb.firebaseio.com",
-        projectId: "viral-video-2ddb4",
-        storageBucket: "viral-video-2ddb4.firebasestorage.app",
-        messagingSenderId: "371603329130",
-        appId: "1:371603329130:web:2125f1eb16b6bfb55e7a13",
-        measurementId: "G-L4481L78P1"
-    };
-
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoId = urlParams.get('id');
-    const currentUrl = window.location.href;
-
-    if (videoId) {
-        const dataRef = db.ref('videos/' + videoId);
-        
-        dataRef.once('value').then((snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.val();
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(data => {
+                grid.innerHTML = "";
                 
-                // যদি Keywords না থাকে, তাহলে Title থেকেই Keywords তৈরি করা হবে
-                const keywords = data.keywords ? data.keywords : data.title; 
+                // ডাটা অ্যারে কিনা চেক করা হচ্ছে
+                const videos = Array.isArray(data) ? data : (data.videos || []);
 
-                // =================================================
-                // 🚀 SEO ও মেটা ট্যাগ আপডেট (Google এর জন্য) 🚀
-                // =================================================
-
-                // ১. টাইটেল ট্যাগ পরিবর্তন
-                document.title = data.title + " | Viral Video"; 
-
-                // ২. মেটা ডেসক্রিপশন পরিবর্তন
-                document.querySelector('meta[name="description"]').setAttribute("content", data.description);
-
-                // ৩. 🚀 মেটা Keywords আপডেট করা
-                document.querySelector('meta[name="keywords"]').setAttribute("content", keywords);
-                
-                // ৪. ক্যানোনিক্যাল লিংক আপডেট
-                document.getElementById('canonicalLink').href = currentUrl;
-
-                // ৫. ওপেন গ্রাফ ট্যাগ আপডেট
-                document.querySelector('meta[property="og:title"]').setAttribute("content", data.title);
-                document.querySelector('meta[property="og:description"]').setAttribute("content", data.description);
-                document.querySelector('meta[property="og:image"]').setAttribute("content", data.thumbnail);
-                document.querySelector('meta[property="og:url"]').setAttribute("content", currentUrl);
-                
-                // ৬. 🚀 Schema Markup (JSON-LD) আপডেট করা
-                const schemaData = {
-                    "@context": "https://schema.org",
-                    "@type": "WebPage", 
-                    "name": data.title,
-                    "url": currentUrl,
-                    "description": data.description,
-                    "keywords": keywords
-                };
-                // স্ক্রিপ্ট ট্যাগে JSON ডেটা ঢোকানো
-                document.getElementById('schemaMarkup').textContent = JSON.stringify(schemaData, null, 2);
-
-                // =================================================
-                // UI আপডেট (দৃশ্যমান অংশ)
-                // =================================================
-                
-                document.getElementById('videoFrame').src = data.videoUrl;
-                document.getElementById('vidTitle').innerText = data.title;
-                document.getElementById('vidDesc').innerText = data.description;
-                
-                // ডাউনলোড বাটন লজিক
-                if(data.downloadUrl && data.downloadUrl.trim() !== ""){
-                    document.getElementById('dlBtn').href = data.downloadUrl;
-                } else {
-                    document.getElementById('dlBtn').style.display = 'none';
+                if(videos.length === 0) { 
+                    grid.innerHTML = "<p class='text-center'>No videos found</p>"; 
+                    return; 
                 }
 
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('content').style.display = 'block';
-
-            } else {
-                document.getElementById('loading').innerHTML = "<h3 class='text-danger'>ভিডিও পাওয়া যায়নি!</h3>";
-            }
-        }).catch((error) => {
-            console.error("Error:", error);
-            document.getElementById('loading').innerHTML = "<h3 class='text-danger'>ডাটা লোড হতে সমস্যা হয়েছে।</h3>";
-        });
-    } else {
-        window.location.href = "index.html";
-    }
-</script>
-
+                videos.forEach(v => {
+                    // Deep Link তৈরি করা হচ্ছে: post.html?id=VIDEO_ID
+                    // লক্ষ্য করুন: এখানে v.id ব্যবহার করা হয়েছে
+                    grid.innerHTML += `
+                        <div class="col-12 col-md-4">
+                            <a href="post.html?id=${v.id}" class="video-card">
+                                <img src="${v.thumbnail}" class="thumb" onerror="this.src='https://placehold.co/600x400'">
+                                <div class="card-body">
+                                    <h6 class="video-title">${v.title}</h6>
+                                    <small class="text-muted">Click to Watch</small>
+                                </div>
+                            </a>
+                        </div>
+                    `;
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                grid.innerHTML = "<p class='text-center text-danger'>Error loading videos</p>";
+            });
+    </script>
 </body>
 </html>
