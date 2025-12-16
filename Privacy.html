@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --primary-color: #6200EE; /* Material Deep Purple */
+            --bg-color: #f5f5f5; 
+            --card-bg: #ffffff; 
+            --text-dark: #212121;
+            --text-secondary: #757575;
+        }
+        
+        body { 
+            background-color: var(--bg-color); 
+            font-family: 'Roboto', sans-serif; 
+            color: var(--text-dark);
+            padding-top: 60px; /* Space for fixed header */
+            padding-bottom: 20px;
+        }
+
+        /* --- Material App Bar (Header) --- */
+        .material-header {
+            background-color: var(--primary-color);
+            color: white;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            z-index: 1000;
+            box-shadow: 0 4px 5px rgba(0,0,0,0.14), 0 1px 10px rgba(0,0,0,0.12);
+        }
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-left: 20px;
+        }
+        .back-btn {
+            background: none; border: none; color: white;
+            font-size: 1.5rem; padding: 5px; cursor: pointer;
+            display: flex; align-items: center;
+        }
+
+        /* --- List Items (Menu) --- */
+        .settings-list {
+            max-width: 800px;
+            margin: 10px auto;
+            padding: 0 10px;
+        }
+        .setting-item {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            text-decoration: none; color: var(--text-dark);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .setting-item:active {
+            transform: scale(0.98);
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+        .icon-box {
+            width: 40px; height: 40px;
+            background: rgba(98, 0, 238, 0.1);
+            color: var(--primary-color);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; margin-right: 15px;
+        }
+        .item-text { flex: 1; font-weight: 500; font-size: 1rem; }
+
+        /* --- Content Pages (Privacy/DMCA) --- */
+        .page-content {
+            background: var(--card-bg);
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            line-height: 1.6;
+        }
+        .page-content h4 {
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-top: 25px;
+            font-size: 1.1rem;
+        }
+        .page-content ul { padding-left: 20px; color: var(--text-secondary); }
+        .page-content p { color: var(--text-secondary); margin-bottom: 10px; }
+        .page-content a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+
+        /* --- Social Links --- */
+        .social-card {
+            background: var(--card-bg);
+            border-radius: 12px; padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .social-icons a {
+            display: inline-block;
+            margin: 0 15px;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            transition: color 0.3s;
+        }
+        
+        /* Utils */
+        .d-none { display: none !important; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="material-header">
+        <button class="back-btn" id="headerBackBtn" onclick="goBack()">
+            <i class="bi bi-arrow-left"></i>
+        </button>
+        <span class="header-title" id="headerTitle">Settings</span>
+    </div>
+
+    <div id="view-menu" class="settings-list fade-in">
+        <p class="text-secondary ms-2 mb-2 small fw-bold">GENERAL</p>
+        
+        <div class="setting-item" onclick="openPage('view-privacy', 'Privacy Policy')">
+            <div class="icon-box"><i class="bi bi-shield-lock-fill"></i></div>
+            <div class="item-text">Privacy Policy</div>
+            <i class="bi bi-chevron-right text-secondary"></i>
+        </div>
+
+        <div class="setting-item" onclick="openPage('view-dmca', 'DMCA / Copyright')">
+            <div class="icon-box"><i class="bi bi-file-earmark-text-fill"></i></div>
+            <div class="item-text">DMCA & Copyright</div>
+            <i class="bi bi-chevron-right text-secondary"></i>
+        </div>
+
+        <p class="text-secondary ms-2 mt-4 mb-2 small fw-bold">SUPPORT</p>
+
+        <a href="mailto:minhaj7b118b11@gmail.com" class="setting-item">
+            <div class="icon-box"><i class="bi bi-envelope-fill"></i></div>
+            <div class="item-text">Contact Email</div>
+            <small class="text-muted">minhaj7b118b11@gmail.com</small>
+        </a>
+
+        <div class="social-card">
+            <p class="mb-3 fw-bold text-secondary">Follow Us</p>
+            <div class="social-icons">
+                <a href="#"><i class="bi bi-facebook"></i></a>
+                <a href="#"><i class="bi bi-instagram"></i></a>
+                <a href="https://t.me/minhajcode" target="_blank"><i class="bi bi-telegram"></i></a>
+                <a href="https://viral-clips-hub.web.app/" target="_blank"><i class="bi bi-globe"></i></a>
+            </div>
+            <p class="mt-4 small text-muted">&copy; 2025 Viral Clips Hub | v1.0.0</p>
+        </div>
+    </div>
+
+
+    <div id="view-privacy" class="container d-none fade-in">
+        <div class="page-content">
+            <p class="small text-muted mb-4">Last Updated: <span id="privacyDate"></span></p>
+
+            <p>Welcome to our website. Your privacy is very important to us. This Privacy Policy document explains what information we collect, how we use it, and how we protect it.</p>
+            <hr>
+
+            <h4>📌 1. Nature of Our Content</h4>
+            <p>Our website provides:</p>
+            <ul>
+                <li>Information about viral videos</li>
+                <li>MMS / social media–related news</li>
+                <li>Articles and general news content</li>
+            </ul>
+            <div class="alert alert-warning mt-3 border-0 bg-light text-dark">
+                <strong>Important Notice:</strong>
+                <ul class="mb-0 mt-2 small">
+                    <li>We do not host any videos on our own servers.</li>
+                    <li>We do not upload, store, or make any video viral.</li>
+                    <li>All videos are third-party links or embedded content.</li>
+                </ul>
+            </div>
+
+            <h4>📌 2. Copyright Disclaimer</h4>
+            <ul>
+                <li>All videos, images, and media content belong to their respective owners.</li>
+                <li>We do not claim ownership of any third-party content.</li>
+                <li>Verified infringing content will be removed promptly upon contact.</li>
+            </ul>
+
+            <h4>📌 3. Information We Collect</h4>
+            <p>We do not collect personally identifiable information. We may automatically collect non-personal info like IP address, browser type, and device info for traffic analysis.</p>
+
+            <h4>📌 4. Cookies</h4>
+            <p>We may use cookies to improve user experience and display ads (e.g., Google AdSense). You can disable cookies in your browser settings.</p>
+
+            <h4>📌 5. Third-Party Links</h4>
+            <p>We are not responsible for the privacy practices or content of external websites linked from here.</p>
+
+            <h4>📌 6. Children’s Information</h4>
+            <p>Our website is not intended for children under 13. We do not knowingly collect info from children.</p>
+
+            <h4>📌 7. Contact Us</h4>
+            <p>Telegram: <a href="https://t.me/minhajcode">@minhajcode</a></p>
+        </div>
+    </div>
+
+
+    <div id="view-dmca" class="container d-none fade-in">
+        <div class="page-content">
+            <h4 class="mt-0">📜 Digital Millennium Copyright Act</h4>
+            <hr>
+            
+            <p>All parts of the <a href="https://viral-clips-hub.web.app/">viral-clips-hub.web.app</a> website are for private use only.</p>
+            
+            <h4 class="mt-4">Hosting & Responsibility</h4>
+            <ul>
+                <li>No files are hosted on our server. All contents are provided by non-affiliated third parties. They are only indexed much like how Google works.</li>
+                <li>We do not accept responsibility for content hosted on third-party websites and do not have any involvement in the downloading/uploading of media.</li>
+                <li>This site merely indexes other sites’ contents. The administrator cannot be held responsible for the contents of any linked sites.</li>
+            </ul>
+
+            <h4 class="mt-4">Copyright Issues</h4>
+            <p>For any copyright issues, you should <strong>contact the file hosting sites directly</strong>.</p>
+            <p>If you need further information, please contact us:</p>
+
+            <div class="mt-3 p-3 bg-light rounded">
+                <p class="mb-1"><i class="bi bi-clock"></i> Please allow 1-2 business days for a response.</p>
+                <p class="mb-1"><i class="bi bi-envelope"></i> Email: <a href="mailto:minhaj7b118b11@gmail.com">minhaj7b118b11@gmail.com</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set Current Date for Privacy Policy
+        document.getElementById('privacyDate').innerText = new Date().toLocaleDateString();
+
+        // --- Navigation Logic ---
+        
+        function openPage(pageId, title) {
+            // Hide Menu
+            document.getElementById('view-menu').classList.add('d-none');
+            
+            // Show Target Page
+            document.getElementById(pageId).classList.remove('d-none');
+            document.getElementById(pageId).classList.add('fade-in');
+
+            // Update Header
+            document.getElementById('headerTitle').innerText = title;
+            
+            // Update Back Button behavior
+            document.getElementById('headerBackBtn').setAttribute('onclick', 'closePage()');
+            
+            // Scroll to top
+            window.scrollTo(0,0);
+        }
+
+        function closePage() {
+            // Hide all sub-pages
+            document.getElementById('view-privacy').classList.add('d-none');
+            document.getElementById('view-dmca').classList.add('d-none');
+            
+            // Show Menu
+            document.getElementById('view-menu').classList.remove('d-none');
+            document.getElementById('view-menu').classList.add('fade-in');
+
+            // Reset Header
+            document.getElementById('headerTitle').innerText = 'Settings';
+            
+            // Reset Back Button behavior (to go back to index.html)
+            document.getElementById('headerBackBtn').setAttribute('onclick', 'goBack()');
+        }
+
+        function goBack() {
+            // If in iframe or just want to go back to previous history
+            if(window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+  </html>
