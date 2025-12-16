@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* ডিজাইন ও CSS একদম আগের মতোই রাখা হয়েছে */
         :root { --primary-color: #6200ea; --bg-color: #f4f7fa; --card-bg: #ffffff; --nav-height: 70px; }
         body { background-color: var(--bg-color); font-family: 'Poppins', sans-serif; padding-bottom: calc(var(--nav-height) + 20px); padding-top: 60px; }
         .top-header { background: white; box-shadow: 0 2px 15px rgba(0,0,0,0.03); height: 60px; z-index: 1000; }
@@ -22,10 +21,7 @@
         .video-date { font-size: 0.75rem; color: #95a5a6; display: block; }
         .bottom-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); height: var(--nav-height); border-top: 1px solid rgba(0,0,0,0.05); box-shadow: 0 -5px 20px rgba(0,0,0,0.05); }
         .nav-item-custom { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; cursor: pointer; transition: all 0.3s ease; background: none; border: none; padding: 0; height: 100%; }
-        .nav-item-custom i { font-size: 1.4rem; margin-bottom: 4px; transition: transform 0.2s; }
-        .nav-item-custom span { font-size: 0.75rem; font-weight: 500; }
         .nav-item-custom.active { color: var(--primary-color); }
-        .nav-item-custom.active i { transform: translateY(-2px); }
         .webview-container { width: 100%; height: calc(100vh - 140px); border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         iframe { width: 100%; height: 100%; border: none; }
         .loading-container { display: flex; justify-content: center; padding-top: 50px; }
@@ -46,6 +42,7 @@
                 <div class="loading-container"><div class="spinner-border text-primary" role="status"></div></div>
             </div>
         </div>
+
         <div id="section-news" class="d-none">
             <div class="webview-container"><iframe src="https://www.bbc.com/bengali"></iframe></div>
         </div>
@@ -63,51 +60,45 @@
     </nav>
 
     <script>
-        function switchTab(tabName) {
-            document.getElementById('section-home').classList.add('d-none');
-            document.getElementById('section-news').classList.add('d-none');
-            document.getElementById('section-setting').classList.add('d-none');
-            const navButtons = document.querySelectorAll('.nav-item-custom');
-            navButtons.forEach(btn => btn.classList.remove('active'));
-
-            if (tabName === 'home') {
-                document.getElementById('section-home').classList.remove('d-none');
-                navButtons[0].classList.add('active');
-            } else if (tabName === 'news') {
-                document.getElementById('section-news').classList.remove('d-none');
-                navButtons[1].classList.add('active');
-            } else if (tabName === 'setting') {
-                document.getElementById('section-setting').classList.remove('d-none');
-                navButtons[2].classList.add('active');
-            }
-        }
-
-        // --- EDGE FUNCTION LOGIC ---
+        // --- EDGE FUNCTION URL ---
         const API_URL = "https://zaddbqhvwakcnqelwaxs.supabase.co/functions/v1/rapid-worker";
         const grid = document.getElementById('grid');
 
-        // ডাটা ফেচ করা হচ্ছে
+        function switchTab(tabName) {
+            document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('d-none'));
+            document.querySelectorAll('.nav-item-custom').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('section-' + tabName).classList.remove('d-none');
+            document.querySelector(`.nav-item-custom[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        }
+
+        // --- ডাটা ফেচিং এবং স্টোরিং লজিক ---
         fetch(API_URL)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error("API call failed with status: " + response.status);
+                return response.json();
+            })
             .then(data => {
                 grid.innerHTML = "";
                 
-                // যদি ডাটা Array হিসেবে আসে
-                let list = Array.isArray(data) ? data : Object.values(data);
+                // ডাটা অ্যারে কিনা চেক করা হচ্ছে
+                let videos = Array.isArray(data) ? data : (data.videos || Object.values(data));
 
-                if(list.length === 0) { 
+                if(videos.length === 0) { 
                     grid.innerHTML = "<div class='col-12 text-center text-muted mt-5'><i class='bi bi-folder2-open display-1'></i><p class='mt-3'>No videos found</p></div>"; 
                     return; 
                 }
 
-                // ডাটা রিভার্স করে দেখানো হচ্ছে
-                list.reverse().forEach(v => {
-                    // নোট: 'v.k' বা 'v.id' যা আপনার API রিটার্ন করে সেটা ব্যবহার করবেন। আমি 'v.id' ধরে নিয়েছি।
-                    let vID = v.id || v.k || v.key; 
+                // **গুরুত্বপূর্ণ:** সম্পূর্ণ ডাটা লোকাল স্টোরেজে সেভ করা হলো
+                localStorage.setItem('videoList', JSON.stringify(videos));
+
+                // UI তে ভিডিও ডিসপ্লে
+                videos.reverse().forEach(v => {
+                    // post.html এ শুধু ভিডিওর ID পাঠানো হচ্ছে
+                    const videoId = v.id || v.k || v.key;
                     
                     grid.innerHTML += `
                         <div class="col-12 col-md-4 col-lg-3">
-                            <a href="post.html?id=${vID}" class="video-card">
+                            <a href="post.html?id=${videoId}" class="video-card">
                                 <img src="${v.thumbnail}" class="thumb" onerror="this.src='https://placehold.co/600x400/e0e0e0/888888?text=Video'">
                                 <div class="card-body">
                                     <h6 class="video-title">${v.title}</h6>
@@ -119,9 +110,9 @@
                 });
             })
             .catch(error => {
-                console.error("Error fetching data:", error);
-                grid.innerHTML = "<div class='col-12 text-center text-danger mt-5'><p>Error loading content.</p></div>";
+                console.error("Error loading content:", error);
+                grid.innerHTML = "<div class='col-12 text-center text-danger mt-5'><p>Error loading content. Please check the API URL and response.</p></div>";
             });
     </script>
 </body>
-</html>
+</html> 
